@@ -9,8 +9,6 @@ from kasa import SmartStrip, SmartDevice
 # flexpool api seems to rate-limit updates when hitting api too often, have to scale back on status checks
 
 # TODO
-# move variables to rig_settings.json
-# multithread checking/resetting multiple rigs
 # better logging (asyncio compatible)
 # create file default.json to have default values between different APIs/methods of checking online
     # related to above, find more accurate way of checking if online or not BC API is laggy
@@ -61,7 +59,6 @@ def is_online_calc(t_until_offline, worker, log_ol_deltas):
     if not passed_online_check:
         exceeds_message = ' This exceeds the allowed offline time of {} minutes.'.format(t_until_offline) if t_until_offline > 0 else ''
         log('Worker is OFFLINE, was last seen {} minutes ago.{}'.format(last_seen_delta_in_minutes, exceeds_message))
-        log('Worker JSON:' + str(worker))
         log('Last Seen Time: ' +  datetime.fromtimestamp(worker['lastSeen']).strftime("%Y-%m-%d %H:%M"))
     elif log_ol_deltas:
         log('Worker is ONLINE, was last seen {} minutes ago.'.format(last_seen_delta_in_minutes))
@@ -74,7 +71,6 @@ def log(message):
 async def rig_restarter(rig):
     """Async task for a single rig that will check status and reboot indefinitely."""
     # Correctly set device. Strip needs to update() before getting info about children.
-    print(type(rig))
     device_type = SmartStrip if (rig[smart_strip_plug_name] or rig[smart_strip_plug_number] > -1) else SmartDevice
     device = device_type(rig[kasa_device_ip])
     await device.update()
