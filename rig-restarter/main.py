@@ -1,6 +1,8 @@
 import asyncio
 import requests
 import json
+import logging
+import sys
 
 from datetime import datetime
 from kasa import SmartStrip, SmartDevice
@@ -30,6 +32,15 @@ time_until_offline = 'time_until_offline'
 status_check_frequency = 'status_check_frequency'
 status_check_cooldown = 'status_check_cooldown'
 
+# Setup logging to both file and console
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('rig_restarters.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
 def is_online(rig):
     """Queries API to determine online status. Returns True if online, false if offline."""
@@ -42,14 +53,15 @@ def is_online(rig):
             if (type(worker is dict) and 'name' in worker):
                 if (worker['name'] == rig[worker_name]):
                     return is_online_calc(rig[time_until_offline], worker, rig[log_online_deltas])
-            log("Malformed worker json.")
-        log("Worker not found in list.")
+            else:
+                logging.error("Malformed worker in list:" + str(worker))
+        logging.error("Worker not found in list.")
     elif type(result) is dict:
         if ('name' in result and result['name'] == rig[worker_name]):
             return is_online_calc(time_until_offline, worker, rig[log_online_deltas])
-        log("Worker not found as result.")
+        logging.error("Worker not found as result.")
     else:
-        log("Response type unknown.")
+        logging.error("Response type unknown.")
 
 def is_online_calc(t_until_offline, worker, log_ol_deltas):
     """Datetime calculation to determine whether rig status is offline depending on given parameters."""
@@ -58,15 +70,12 @@ def is_online_calc(t_until_offline, worker, log_ol_deltas):
 
     if not passed_online_check:
         exceeds_message = ' This exceeds the allowed offline time of {} minutes.'.format(t_until_offline) if t_until_offline > 0 else ''
-        log('Worker is OFFLINE, was last seen {} minutes ago.{}'.format(last_seen_delta_in_minutes, exceeds_message))
-        log('Last Seen Time: ' +  datetime.fromtimestamp(worker['lastSeen']).strftime("%Y-%m-%d %H:%M"))
+        logging.info('Worker is OFFLINE, was last seen {} minutes ago.{}'.format(last_seen_delta_in_minutes, exceeds_message))
+        logging.info('Last Seen Time: ' +  datetime.fromtimestamp(worker['lastSeen']).strftime("%Y-%m-%d %H:%M"))
     elif log_ol_deltas:
-        log('Worker is ONLINE, was last seen {} minutes ago.'.format(last_seen_delta_in_minutes))
+        logging.info('Worker is ONLINE, was last seen {} minutes ago.'.format(last_seen_delta_in_minutes))
     return passed_online_check
 
-def log(message):
-    now = datetime.now()
-    print('[' + now.strftime("%Y-%m-%d %H:%M") + '] ' + message)
 
 async def rig_restarter(rig):
     """Async task for a single rig that will check status and reboot indefinitely."""
