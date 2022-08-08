@@ -1,18 +1,10 @@
 [
     {
-        "url" : "https://api.flexpool.io/v2/miner/workers?coin={}&address={}&worker={}",
-        "coin" : "ETH",
+        "status_api" : "flexpool",
         "wallet" : "0xff4Cc24876f6Bc3F218e750DB9343737f3E99392",
         "kasa_device_ip" : "192.168.0.12",
         "worker_name" : "AC_Rig_Nvidia",
         "smart_strip_plug_name" : "Nvidia Rig",
-        "smart_strip_plug_number" : 1,
-    
-        "log_online_deltas" : true,
-    
-        "power_cycle_on_delay" : 3,
-        "time_until_offline" : 10,
-        "status_check_frequency" : 3,
-        "status_check_cooldown" : 10
+        "smart_strip_plug_number" : 1
     }
 ]

@@ -1,0 +1,11 @@
+{
+    "flexpool": {
+        "endpoint" : "https://api.flexpool.io/v2/miner/workers?coin={}&address={}&worker={}",
+        "coin" : "ETH",
+    
+        "power_cycle_on_delay" : 3,
+        "time_until_offline" : 10,
+        "status_check_frequency" : 2,
+        "status_check_cooldown" : 10
+    }
+}

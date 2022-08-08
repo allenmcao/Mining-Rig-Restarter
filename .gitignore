@@ -1,2 +1,4 @@
 .vscode
 src/rigs.json
+__pycache__
+rig-restarter/rig_restarter.log
