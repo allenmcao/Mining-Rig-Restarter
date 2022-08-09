@@ -68,16 +68,25 @@ def is_online(rig):
         raise exceptions.RRMissingWorkerException(rig[worker_name])
 
 def is_online_calc(t_until_offline, worker):
-    """Datetime calculation to determine whether rig status is offline depending on given parameters."""
-    last_seen_delta_in_minutes = ((datetime.now() - datetime.fromtimestamp(worker['lastSeen'])).total_seconds() / 60)
-    passed_online_check = t_until_offline > last_seen_delta_in_minutes if t_until_offline > 0 else worker['isOnline']
+    """Datetime calculation to determine whether rig status is offline depending on given parameters.
+    
+    If t_until_offline is unspecified (<=0) then the 'isOnline' field is used to determine if online/offline.
+    Last seen time is still calculated and returned in this instance.
+    """
+    last_seen_time = datetime.fromtimestamp(worker['lastSeen'])
 
+    last_seen_delta = (datetime.now() - last_seen_time).total_seconds()
+    last_seen_delta_m, last_seen_delta_s, ur_last_seen_delta_m = round(last_seen_delta // 60), round(last_seen_delta % 60), last_seen_delta / 60
+    
+    passed_online_check = t_until_offline > ur_last_seen_delta_m if t_until_offline > 0 else worker['isOnline']
+
+    last_seen_message = f'Was last seen {last_seen_delta_m}m {last_seen_delta_s}s ago.'
     if not passed_online_check:
-        exceeds_message = ' This exceeds the allowed offline time of {} minutes.'.format(t_until_offline) if t_until_offline > 0 else ''
-        log.logger.info('Worker is OFFLINE, was last seen {} minutes ago.{}'.format(last_seen_delta_in_minutes, exceeds_message))
-        log.logger.info('Last Seen Time: ' +  datetime.fromtimestamp(worker['lastSeen']).strftime("%Y-%m-%d %H:%M"))
+        exceeds_message = f' This exceeds the allowed offline time of {t_until_offline} min.' if t_until_offline > 0 else ''
+        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
+        log.logger.info(f'Last seen time: {last_seen_time.strftime("%Y-%m-%d %H:%M")}')
     else:
-        log.logger.info('Worker is ONLINE, was last seen {} minutes ago.'.format(last_seen_delta_in_minutes))
+        log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
     return passed_online_check
 
 
