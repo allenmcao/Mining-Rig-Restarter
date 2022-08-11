@@ -14,6 +14,7 @@ from kasa import SmartStrip, SmartDevice
 #   Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
 #   Add enum for supported APIs
 # Move API requests to separate modules
+# Add additional cooldowns and failsafes for extremely unstable rigs
 # Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
 
 # Fields
@@ -35,6 +36,8 @@ power_cycle_on_delay = 'power_cycle_on_delay'
 time_until_offline = 'time_until_offline'
 status_check_frequency = 'status_check_frequency'
 status_check_cooldown = 'status_check_cooldown'
+max_consecutive_restarts = 'max_consecutive_restarts'
+current_consecutive_restarts = 'current_consecutive_restarts'
 
 # Initialize default settings for each api from defaults.json
 defaults = {}
@@ -42,7 +45,7 @@ with open('defaults.json') as defaults_file:
     defaults = json.load(defaults_file)
 
 
-def is_online(rig):
+def is_online_query(rig):
     """Queries API to determine online status. Returns True if online, false if offline."""
     if status_api in rig:
         if rig[status_api] == 'flexpool':
@@ -56,7 +59,7 @@ def is_online(rig):
         for worker in result:
             if (type(worker is dict) and 'name' in worker):
                 if (worker['name'] == rig[worker_name]):
-                    return is_online_calc(rig[time_until_offline], worker)
+                    return is_online_calc(rig[time_until_offline], worker, rig)
             else:
                 raise exceptions.RRMissingFieldException('API Worker Result', 'name')
         raise exceptions.RRMissingWorkerException(rig[worker_name])
@@ -67,7 +70,7 @@ def is_online(rig):
     else:
         raise exceptions.RRMissingWorkerException(rig[worker_name])
 
-def is_online_calc(t_until_offline, worker):
+def is_online_calc(t_until_offline, worker, rig):
     """Datetime calculation to determine whether rig status is offline depending on given parameters.
     
     If t_until_offline is unspecified (<=0) then the 'isOnline' field is used to determine if online/offline.
@@ -82,10 +85,16 @@ def is_online_calc(t_until_offline, worker):
 
     last_seen_message = f'Was last seen {last_seen_delta_m}m {last_seen_delta_s}s ago.'
     if not passed_online_check:
+        # Stop current rig_restarter coroutine if max concurrent restarts is reached
+        rig[current_consecutive_restarts] += 1
+        if rig[current_consecutive_restarts] >= rig[max_consecutive_restarts]:
+            raise exceptions.RRMaxRestartFailsException(worker['name'], rig[max_consecutive_restarts])
+
         exceeds_message = f' This exceeds the allowed offline time of {t_until_offline} min.' if t_until_offline > 0 else ''
         log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
         log.logger.info(f'Last seen time: {last_seen_time.strftime("%Y-%m-%d %H:%M")}')
     else:
+        rig[current_consecutive_restarts] = 0
         log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
     return passed_online_check
 
@@ -111,8 +120,9 @@ async def rig_restarter(rig):
 
     # Default rig values if unset and run status checks indefinitely
     defaulted_rig = defaults[rig[status_api]] | rig
+    defaulted_rig[current_consecutive_restarts] = 0
     while True:
-        if is_online(defaulted_rig) is False:
+        if is_online_query(defaulted_rig) is False:
             # Reset Smart Device
             # Currently not working to call device.reboot(), API is behaving incorrectly. Custom implementation below
             if device.is_on:

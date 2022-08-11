@@ -35,3 +35,18 @@ class RRMissingWorkerException(Exception):
     self.worker_name = worker_name
     self.message = f"Worker API result does not include worker {worker_name}."
     super().__init__(self.message)
+
+class RRMaxRestartFailsException(Exception):
+  """
+  Exception raised when worker has restarted max_restart_fails times in a row and is still not online.
+  Failsafe for extremely unstable rigs.
+
+  Attributes:
+    key_attribute -- worker_name, max_restart_fails
+  """
+
+  def __init__(self, worker_name, max_restart_fails):
+    self.worker_name = worker_name
+    self.max_restart_fails = max_restart_fails
+    self.message = f"{worker_name} has failed to restart {max_restart_fails} times in a row and is extremely unstable, stopping restarts."
+    super().__init__(self.message)
