@@ -14,7 +14,6 @@ from kasa import SmartStrip, SmartDevice
 #   Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
 #   Add enum for supported APIs
 # Move API requests to separate modules
-# Add additional cooldowns and failsafes for extremely unstable rigs
 # Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
 
 # Fields
@@ -91,8 +90,8 @@ def is_online_calc(t_until_offline, worker, rig):
             raise exceptions.RRMaxRestartFailsException(worker['name'], rig[max_consecutive_restarts])
 
         exceeds_message = f' This exceeds the allowed offline time of {t_until_offline} min.' if t_until_offline > 0 else ''
-        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
-        log.logger.info(f'Last seen time: {last_seen_time.strftime("%Y-%m-%d %H:%M")}')
+        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message} Last seen time was: [{last_seen_time.strftime("%Y-%m-%d %H:%M")}')
+        log.logger.info(f'\tConsecutive Restarts: {rig[current_consecutive_restarts]}')
     else:
         rig[current_consecutive_restarts] = 0
         log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
