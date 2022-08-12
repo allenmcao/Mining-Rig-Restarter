@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 python-kasa = "*"
 requests = "*"
+humanfriendly = "*"
 
 [dev-packages]
 

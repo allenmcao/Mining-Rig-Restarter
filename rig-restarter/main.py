@@ -7,6 +7,7 @@ import log
 
 from datetime import datetime
 from kasa import SmartStrip, SmartDevice
+from humanfriendly import format_timespan
 
 # TODO
 # Create a detailed README
@@ -76,21 +77,19 @@ def is_online_calc(t_until_offline, worker, rig):
     Last seen time is still calculated and returned in this instance.
     """
     last_seen_time = datetime.fromtimestamp(worker['lastSeen'])
-
-    last_seen_delta = (datetime.now() - last_seen_time).total_seconds()
-    last_seen_delta_m, last_seen_delta_s, ur_last_seen_delta_m = round(last_seen_delta // 60), round(last_seen_delta % 60), last_seen_delta / 60
+    last_seen_delta = round((datetime.now() - last_seen_time).total_seconds())
+    last_seen_message = f'Was last seen {format_timespan(last_seen_delta)} ago.'
     
-    passed_online_check = t_until_offline > ur_last_seen_delta_m if t_until_offline > 0 else worker['isOnline']
-
-    last_seen_message = f'Was last seen {last_seen_delta_m}m {last_seen_delta_s}s ago.'
+    passed_online_check = t_until_offline > last_seen_delta / 60 if t_until_offline > 0 else worker['isOnline']
+    
     if not passed_online_check:
-        # Stop current rig_restarter coroutine if max concurrent restarts is reached
+        # Stop current rig_restarter coroutine if max consecutive restarts is reached
         rig[current_consecutive_restarts] += 1
         if rig[current_consecutive_restarts] >= rig[max_consecutive_restarts]:
             raise exceptions.RRMaxRestartFailsException(worker['name'], rig[max_consecutive_restarts])
 
         exceeds_message = f' This exceeds the allowed offline time of {t_until_offline} min.' if t_until_offline > 0 else ''
-        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message} Last seen time was: [{last_seen_time.strftime("%Y-%m-%d %H:%M")}')
+        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
         log.logger.info(f'\tConsecutive Restarts: {rig[current_consecutive_restarts]}')
     else:
         rig[current_consecutive_restarts] = 0
