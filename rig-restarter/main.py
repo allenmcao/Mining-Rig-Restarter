@@ -10,7 +10,8 @@ from kasa import SmartStrip, SmartDevice
 from humanfriendly import format_timespan
 
 # TODO
-# Create a detailed README
+# Polish README
+# Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
 # Add more supported APIs (ethermine, hiveOS)
 #   Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
 #   Add enum for supported APIs
@@ -71,7 +72,7 @@ def is_online_query(rig):
         raise exceptions.RRMissingWorkerException(rig[worker_name])
 
 def is_online_calc(t_until_offline, worker, rig):
-    """Datetime calculation to determine whether rig status is offline depending on given parameters.
+    """Performs calculation to determine whether rig status is offline depending on given parameters.
     
     If t_until_offline is unspecified (<=0) then the 'isOnline' field is used to determine if online/offline.
     Last seen time is still calculated and returned in this instance.

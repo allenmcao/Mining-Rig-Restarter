@@ -4,6 +4,5 @@
         "wallet" : "0x1234abcde1234abcde12345abcde123456",
         "kasa_device_ip" : "192.168.0.0",
         "worker_name" : "Example_Worker",
-        "smart_strip_plug_name" : "Example_Worker_Plug"
     }
 ]
