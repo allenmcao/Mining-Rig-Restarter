@@ -1,6 +1,7 @@
 # Mining Rig Restarter
 
-This script automatically restarts mining rigs that repeatedly become unresponsive or shutdown.
+This script automatically restarts mining rigs that repeatedly become unresponsive and/or often shutdown.
+If your rig is running HiveOS, there is a similar functionality with "Hashrate Watchdog" that will restart when internet is lost or hashrate becomes too low. However, this will **not** work when the rig becomes unresponsive from crashing, which happens very often. Even long-running rigs may suddenly become unstable and will not report properly to HiveOS when losing connectivity, which is where this script comes in.
 
 ## Requirements
 
@@ -16,10 +17,12 @@ After cloning the repository, install all the dependencies with:
 ```sh
 pipenv install
 ```
-Create a file `/rig-restarter/rigs.json` with the mandatory fields. Look at `/rig-restarter/rigs-example.json` for the simplest possible to immediately get started.
+Create a file `/rig-restarter/rigs.json` with the mandatory fields. Look at `/rig-restarter/rigs-example.json` for the simplest possible config to get started.
 
 Once you are done, run `/rig-restarter/main.py` in order to launch the script.
-For windows, 
+
+## How it works
+
 
 ## Config
 
@@ -52,9 +55,19 @@ An full example config is shown below, with mandatory fields on top and optional
 - `kasa_device_ip` that corresponds to the local IP address of the smart device connected to your rig. For IP discovery, check the docs for `python-kasa` [here](https://github.com/python-kasa/python-kasa#discovering-devices)
 
 ### Optional Fields
-- `smart_strip_plug_name` only if using a Kasa Smart Strip. Either this or plug number is required.
-- `smart_strip_plug_number` only if using a Kasa Smart Strip. Either this or plug name is required.
+- `smart_strip_plug_name` to search which strip plug to power cycle. If using a Kasa Power Strip, either this or plug number is required.
+- `smart_strip_plug_number` refers to the plug number to power cycle. If using a Kasa Power Strip, either this or plug name is required.
+### Following fields will be defaulted for each pool:
 - `power_cycle_on_delay` is the time in seconds to delay setting power back on during power cycle. Some rigs are more unstablea nd do not turn off fully without waiting, so require a longer delay to safely restart.
+- `time_until_offline` is the time in minutes of unresponsiveness for the rig to be considered offline. This is determined by the delta between now and the last seen time (as given by pool API)
 - `status_check_frequency`is the time in minutes for how often main loop runs for this particular rig restarter.
 - `status_check_cooldown` is the time in minutes to wait after restarting a rig
 - `max_consecutive_restarts` is the maximum times a rig can restart in a row before it is deemed unstable. The rig-restarter coroutine for that particular rig will be stopped, but other rr coroutines will continue to run.
+
+## Supported Mining Pools
+1. Flexpool
+    - seems to generally update values every 5-10m, seems to be more if rate-limited
+    - `time_until_offline` is 10m as this is the longest it takes for the API to update
+    - `status_check_frequency` is 5m as this is generally the earliest it can update
+    - `status_check_cooldown` is 10m as this is the latest it would take to update, don't want to reset again
+    - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
