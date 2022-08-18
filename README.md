@@ -61,7 +61,7 @@ An full example config is shown below, with mandatory fields on top and optional
 - `smart_strip_plug_name` to search which strip plug to power cycle. If using a Kasa Power Strip, either this or plug number is required.
 - `smart_strip_plug_number` refers to the plug number to power cycle. If using a Kasa Power Strip, either this or plug name is required.
 ### Following fields will be defaulted for each pool:
-- `power_cycle_on_delay` is the time in seconds to delay setting power back on during power cycle. Some rigs are more unstablea nd do not turn off fully without waiting, so require a longer delay to safely restart.
+- `power_cycle_on_delay` is the time in seconds to delay setting power back on during power cycle. Some rigs are more unstable and do not turn off fully without waiting, so require a longer delay to safely restart.
 - `time_until_offline` is the time in minutes of unresponsiveness for the rig to be considered offline. This is determined by the delta between now and the last seen time (as given by pool API)
 - `status_check_frequency`is the time in minutes for how often main loop runs for this particular rig restarter.
 - `status_check_cooldown` is the time in minutes to wait after restarting a rig
@@ -76,6 +76,7 @@ An full example config is shown below, with mandatory fields on top and optional
     - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
 
 ## Planned Features
+- Add email/discord/telegram notifications for restarts and stats
 - Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
 - Add more supported APIs (ethermine, hiveOS)
     - Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
