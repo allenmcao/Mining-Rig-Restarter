@@ -1,7 +1,12 @@
 # Mining Rig Restarter
 
 This script automatically restarts mining rigs that repeatedly become unresponsive and/or often shutdown.
-If your rig is running HiveOS, there is a similar functionality with "Hashrate Watchdog" that will restart when internet is lost or hashrate becomes too low. However, this will **not** work when the rig becomes unresponsive from crashing, which happens very often. Even long-running rigs may suddenly become unstable and will not report properly to HiveOS when losing connectivity, which is where this script comes in.
+
+For each rig supplied in the config, an asyncio coroutine is created to monitor and restart that rig. This coroutine checks the rig status periodically and power-cyles the rig if it is determined to be offline. Coroutines are ran in parallel, and will error independently.
+
+Coroutines are ran in parallel, and any error in one rig-restarter coroutine will fail independently, letting the others keep running.
+
+If your rig is running HiveOS, there is a similar functionality with "Hashrate Watchdog" that will restart the rig when internet is lost or hashrate becomes too low. However, this will **not** work when the rig becomes unresponsive from crashing, which happens very often. Even long-running rigs may suddenly become unstable and will not report properly to HiveOS when losing connectivity, which is where this script comes in.
 
 ## Requirements
 
@@ -20,8 +25,6 @@ pipenv install
 Create a file `/rig-restarter/rigs.json` with the mandatory fields. Look at `/rig-restarter/rigs-example.json` for the simplest possible config to get started.
 
 Once you are done, run `/rig-restarter/main.py` in order to launch the script.
-
-## How it works
 
 
 ## Config
@@ -71,3 +74,12 @@ An full example config is shown below, with mandatory fields on top and optional
     - `status_check_frequency` is 5m as this is generally the earliest it can update
     - `status_check_cooldown` is 10m as this is the latest it would take to update, don't want to reset again
     - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
+
+## Planned Features
+- Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
+- Add more supported APIs (ethermine, hiveOS)
+    - Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
+    - Add enum for supported APIs
+- Move API requests to separate modules
+- Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
+- Create and integrate dashboard to manually reset devices

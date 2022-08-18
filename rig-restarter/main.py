@@ -9,15 +9,6 @@ from datetime import datetime
 from kasa import SmartStrip, SmartDevice
 from humanfriendly import format_timespan
 
-# TODO
-# Polish README
-# Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
-# Add more supported APIs (ethermine, hiveOS)
-#   Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
-#   Add enum for supported APIs
-# Move API requests to separate modules
-# Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
-
 # Fields
 status_api = 'status_api'
 coin = 'coin'
