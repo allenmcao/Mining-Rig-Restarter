@@ -45,7 +45,7 @@ def is_online_calc(worker, t_offline):
     passed_online_check = t_offline > last_seen_delta / 60 if t_offline > 0 else worker['isOnline']
     
     if not passed_online_check:
-        exceeds_message = f' This exceeds the allowed offline time of {t_offline} min.' if rig[t_offline] > 0 else ''
+        exceeds_message = f' This exceeds the allowed offline time of {t_offline} min.' if {t_offline} > 0 else ''
         log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
     else:
         log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
