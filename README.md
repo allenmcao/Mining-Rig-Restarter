@@ -76,11 +76,13 @@ An full example config is shown below, with mandatory fields on top and optional
     - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
 
 ## Planned Features
+- Improve project structure with util/
+    - rig-restarter.py separated out (for single rig startups)
+- Make file path matching relative so launching works consistently across Windows/Mac/Linux
+- Make JSON checking more robust (structured field checking, multiple error throwing)
 - Add email/discord/telegram notifications for restarts and stats
-- Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
 - Add more supported APIs (ethermine, hiveOS)
     - Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
-    - Add enum for supported APIs
-- Move API requests to separate modules
 - Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
-- Create and integrate dashboard to manually reset devices
+- Create and integrate dashboard to manually reset devices/create rig restarters
+    - Add autodetect of smart devices to select from to eliminate need for kasa IP discovery

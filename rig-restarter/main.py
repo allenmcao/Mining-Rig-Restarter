@@ -1,13 +1,11 @@
 import asyncio
-import requests
 import json
 
 import exceptions
+import pool_query
 import log
 
-from datetime import datetime
 from kasa import SmartStrip, SmartDevice
-from humanfriendly import format_timespan
 
 # Fields
 status_api = 'status_api'
@@ -31,63 +29,11 @@ status_check_cooldown = 'status_check_cooldown'
 max_consecutive_restarts = 'max_consecutive_restarts'
 current_consecutive_restarts = 'current_consecutive_restarts'
 
-# Initialize default settings for each api from defaults.json
-defaults = {}
-with open('defaults.json') as defaults_file:
-    defaults = json.load(defaults_file)
 
-
-def is_online_query(rig):
-    """Queries API to determine online status. Returns True if online, false if offline."""
-    if status_api in rig:
-        if rig[status_api] == 'flexpool':
-            response = requests.get(rig[endpoint].format(rig[coin], rig[wallet], rig[worker_name]))
-            json_response = json.loads(response.content.decode())
-            result = json_response['result']
-    else:
-        raise exceptions.RRMissingFieldException('Rig', status_api)
-
-    if type(result) is list:
-        for worker in result:
-            if (type(worker is dict) and 'name' in worker):
-                if (worker['name'] == rig[worker_name]):
-                    return is_online_calc(rig[time_until_offline], worker, rig)
-            else:
-                raise exceptions.RRMissingFieldException('API Worker Result', 'name')
-        raise exceptions.RRMissingWorkerException(rig[worker_name])
-    elif type(result) is dict:
-        if ('name' in result and result['name'] == rig[worker_name]):
-            return is_online_calc(time_until_offline, worker)
-        raise exceptions.RRMissingWorkerException(rig[worker_name])
-    else:
-        raise exceptions.RRMissingWorkerException(rig[worker_name])
-
-def is_online_calc(t_until_offline, worker, rig):
-    """Performs calculation to determine whether rig status is offline depending on given parameters.
-    
-    If t_until_offline is unspecified (<=0) then the 'isOnline' field is used to determine if online/offline.
-    Last seen time is still calculated and returned in this instance.
-    """
-    last_seen_time = datetime.fromtimestamp(worker['lastSeen'])
-    last_seen_delta = round((datetime.now() - last_seen_time).total_seconds())
-    last_seen_message = f'Was last seen {format_timespan(last_seen_delta)} ago.'
-    
-    passed_online_check = t_until_offline > last_seen_delta / 60 if t_until_offline > 0 else worker['isOnline']
-    
-    if not passed_online_check:
-        # Stop current rig_restarter coroutine if max consecutive restarts is reached
-        rig[current_consecutive_restarts] += 1
-        if rig[current_consecutive_restarts] >= rig[max_consecutive_restarts]:
-            raise exceptions.RRMaxRestartFailsException(worker['name'], rig[max_consecutive_restarts])
-
-        exceeds_message = f' This exceeds the allowed offline time of {t_until_offline} min.' if t_until_offline > 0 else ''
-        log.logger.info(f'{worker["name"]} is OFFLINE. {last_seen_message}{exceeds_message}')
-        log.logger.info(f'\tConsecutive Restarts: {rig[current_consecutive_restarts]}')
-    else:
-        rig[current_consecutive_restarts] = 0
-        log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
-    return passed_online_check
-
+def is_online(rig):
+    """Checks whether rig is online depending on pool type. Returns True if online, False if offline."""
+    worker_json = pool_query.is_online_query(rig[status_api], rig[worker_name], rig[wallet], rig[coin])
+    return pool_query.is_online_calc(worker_json, rig[time_until_offline])
 
 async def rig_restarter(rig):
     """Async task for a single rig that will check status and reboot indefinitely."""
@@ -109,30 +55,47 @@ async def rig_restarter(rig):
 
 
     # Default rig values if unset and run status checks indefinitely
-    defaulted_rig = defaults[rig[status_api]] | rig
-    defaulted_rig[current_consecutive_restarts] = 0
+    defaults = {}
+    with open('defaults.json') as defaults_file:
+        defaults = json.load(defaults_file)
+    defaults_file.close()
+    rig = defaults[rig[status_api]] | rig
+    
+    current_consecutive_restarts = 0
     while True:
-        if is_online_query(defaulted_rig) is False:
+        if is_online(rig) is False:
+            # Stop current rig_restarter coroutine if max consecutive restarts is reached
+            current_consecutive_restarts += 1
+            log.logger.info(f'\tConsecutive Restarts: {rig[current_consecutive_restarts]}')
+            if current_consecutive_restarts >= rig[max_consecutive_restarts]:
+                raise exceptions.RRMaxRestartFailsException(rig[worker_name], rig[max_consecutive_restarts])
+
             # Reset Smart Device
             # Currently not working to call device.reboot(), API is behaving incorrectly. Custom implementation below
             if device.is_on:
                 await device.turn_off()
-                await asyncio.sleep(defaulted_rig[power_cycle_on_delay])
+                await asyncio.sleep(rig[power_cycle_on_delay])
             await device.turn_on()             
 
             # Cooldown before next status check after reboot
-            await asyncio.sleep(defaulted_rig[status_check_cooldown] * 60)
+            await asyncio.sleep(rig[status_check_cooldown] * 60)
         else:
+            current_consecutive_restarts = 0
+
             # Ensure status checks follow certain frequency (unless just rebooted)
-            await asyncio.sleep(defaulted_rig[status_check_frequency] * 60)
+            await asyncio.sleep(rig[status_check_frequency] * 60)
 
 
 async def main():
     """Create and execute multiple parallel rig restarters for each rig."""
     rig_restarters = []
-    with open('rigs.json') as rigs_file:
-        rigs_json = json.load(rigs_file)
-        rig_restarters = [rig_restarter(rig) for rig in rigs_json]
+
+    try:
+        with open('rigs.json') as rigs_file:
+            rigs_json = json.load(rigs_file)
+            rig_restarters = [rig_restarter(rig) for rig in rigs_json]
+    except:
+        raise exceptions.RRMalformedJsonException('Rigs')
     
     await asyncio.gather(*rig_restarters)
 

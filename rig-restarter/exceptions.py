@@ -8,6 +8,19 @@ class RRException(Exception):
   def __init__(self, message):
     log.logger.error(message)
 
+class RRMalformedJsonException(Exception):
+  """
+  Exception raised when JSON is missing a required field.
+
+  Attributes:
+    key_attribute -- field
+  """
+
+  def __init__(self, json_name):
+    self.json_name = json_name
+    self.message = f"{json_name} JSON does not match required structure and cannot be parsed."
+    super().__init__(self.message)
+
 
 class RRMissingFieldException(Exception):
   """
