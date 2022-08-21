@@ -51,7 +51,7 @@ An full example config is shown below, with mandatory fields on top and optional
  ]
 ```
 
-### Mandatory fields
+### Mandatory Fields
 - `status_api` is the type of pool API to query rig status from. Supported pool APIs will be in `/rig-restarter/pool_api_enum.py`
 - `wallet` address that you are mining to. This is needed to query API
 - `worker_name` used when mining to the pool. This is needed to filter API response to check status of correct rig.
@@ -69,7 +69,7 @@ An full example config is shown below, with mandatory fields on top and optional
 
 ## Supported Mining Pools
 1. Flexpool
-    - seems to generally update values every 5-10m, seems to be more if rate-limited
+    - seems to generally update values every 5-10m, seems to be longer if rate-limited
     - `time_until_offline` is 10m as this is the longest it takes for the API to update
     - `status_check_frequency` is 5m as this is generally the earliest it can update
     - `status_check_cooldown` is 10m as this is the latest it would take to update, don't want to reset again
@@ -81,8 +81,8 @@ An full example config is shown below, with mandatory fields on top and optional
 - Make file path matching relative so launching works consistently across Windows/Mac/Linux
 - Make JSON checking more robust (structured field checking, multiple error throwing)
 - Add email/discord/telegram notifications for restarts and stats
-- Add more supported APIs (ethermine, hiveOS)
-    - Find more accurate way of checking if online or not bc flexpool api seems to rate-limit updates when hitting api too often
+- Add more supported APIs (Ethermine, F2Pool, HiveON)
+    - Find more accurate way of checking if online or not bc Flexpool api seems to rate-limit updates when hitting api too often
 - Add grafana or some other visualization solution to track hashrate, restarts, API update times, etc.
 - Create and integrate dashboard to manually reset devices/create rig restarters
     - Add autodetect of smart devices to select from to eliminate need for kasa IP discovery
