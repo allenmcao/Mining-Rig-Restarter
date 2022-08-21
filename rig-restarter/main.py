@@ -66,7 +66,7 @@ async def rig_restarter(rig):
         if is_online(rig) is False:
             # Stop current rig_restarter coroutine if max consecutive restarts is reached
             current_consecutive_restarts += 1
-            log.logger.info(f'\tConsecutive Restarts: {rig[current_consecutive_restarts]}')
+            log.logger.info(f'\tConsecutive Restarts: {current_consecutive_restarts}')
             if current_consecutive_restarts >= rig[max_consecutive_restarts]:
                 raise exceptions.RRMaxRestartFailsException(rig[worker_name], rig[max_consecutive_restarts])
 
