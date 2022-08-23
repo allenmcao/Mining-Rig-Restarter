@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 import exceptions
 import pool_query
@@ -29,11 +30,14 @@ status_check_cooldown = 'status_check_cooldown'
 max_consecutive_restarts = 'max_consecutive_restarts'
 current_consecutive_restarts = 'current_consecutive_restarts'
 
+# Load defaults file once and store in global variable so any rig restarter can access.
+try:
+    with open(os.path.join(os.path.dirname(__file__), '../defaults.json'), 'r') as defaults_file:
+        defaults = json.load(defaults_file)
+        defaults_file.close()
+except:
+    raise exceptions.RRMalformedJsonException('Defaults')
 
-def is_online(rig):
-    """Checks whether rig is online depending on pool type. Returns True if online, False if offline."""
-    worker_json = pool_query.is_online_query(rig[status_api], rig[worker_name], rig[wallet], rig[coin])
-    return pool_query.is_online_calc(worker_json, rig[time_until_offline])
 
 async def rig_restarter(rig):
     """Async task for a single rig that will check status and reboot indefinitely."""
@@ -53,17 +57,14 @@ async def rig_restarter(rig):
     elif rig[smart_strip_plug_number] > -1:
         device = device.get_plug_by_index(rig[smart_strip_plug_number])
 
-
-    # Default rig values if unset and run status checks indefinitely
-    defaults = {}
-    with open('defaults.json') as defaults_file:
-        defaults = json.load(defaults_file)
-    defaults_file.close()
+    # Default rig values if unset and run status checks indefinitely. Reread each time bc defaults file may be accessed by query.
     rig = defaults[rig[status_api]] | rig
-    
+
+    # Enter indefinite rig restarter loop
     current_consecutive_restarts = 0
     while True:
-        if is_online(rig) is False:
+        status = pool_query.is_online(*pool_query.filter_query_fields(rig))
+        if status is False:
             # Stop current rig_restarter coroutine if max consecutive restarts is reached
             current_consecutive_restarts += 1
             log.logger.info(f'\tConsecutive Restarts: {current_consecutive_restarts}')
@@ -91,7 +92,7 @@ async def main():
     rig_restarters = []
 
     try:
-        with open('rigs.json') as rigs_file:
+        with open(os.path.join(os.path.dirname(__file__), '../rigs.json'), 'r') as rigs_file:
             rigs_json = json.load(rigs_file)
             rig_restarters = [rig_restarter(rig) for rig in rigs_json]
     except:

@@ -76,9 +76,9 @@ An full example config is shown below, with mandatory fields on top and optional
     - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
 
 ## Planned Features
+- Handle case where worker is offline (so thus not returned in pool status API results)
 - Improve project structure with util/
     - rig-restarter.py separated out (for single rig startups)
-- Make file path matching relative so launching works consistently across Windows/Mac/Linux
 - Make JSON checking more robust (structured field checking, multiple error throwing)
 - Add email/discord/telegram notifications for restarts and stats
 - Add more supported APIs (Ethermine, F2Pool, HiveON)
