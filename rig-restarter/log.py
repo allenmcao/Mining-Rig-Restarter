@@ -1,12 +1,13 @@
 import logging
 import sys
+import os
 
 # Setup logging to both file and console
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('rig_restarter.log'),
+        logging.FileHandler(os.path.join(os.path.dirname(__file__), '../rig_restarter.log')),
         logging.StreamHandler(sys.stdout)
     ]
 )

@@ -6,8 +6,8 @@ class Pools(Enum):
           obj = object.__new__(cls)
           obj._value_ = value
           return obj
-    def __init__(self, pool, endpoint):
-        self.pool = pool
+    def __init__(self, poolname, endpoint):
+        self.poolname = poolname
         self.endpoint = endpoint
 
     FLEXPOOL = ('flexpool', 'https://api.flexpool.io/v2/miner/workers?worker={}&address={}&coin={}')

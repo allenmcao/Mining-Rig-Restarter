@@ -3,7 +3,7 @@ import json
 
 import exceptions
 import log
-from pool_enum import Pools
+from pools_enum import Pools
 
 from datetime import datetime
 from humanfriendly import format_timespan
@@ -33,7 +33,7 @@ current_consecutive_restarts = 'current_consecutive_restarts'
 def is_online_query(status_api, worker_name, wallet, coin):
     """Queries correct API to determine online status. Returns pool stat for worker"""
     match status_api:
-        case Pools.FLEXPOOL.pool:
+        case Pools.FLEXPOOL.poolname:
             response = requests.get(Pools.FLEXPOOL.endpoint.format(worker_name, wallet, coin))
             json_response = json.loads(response.content.decode())
             result = json_response['result']
