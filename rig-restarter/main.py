@@ -47,14 +47,14 @@ async def rig_restarter(rig):
             raise exceptions.RRMissingFieldException('Rig', mand)
 
     # Correctly set device. Strip needs to update() before getting info about children.
-    device_type = SmartStrip if (rig[smart_strip_plug_name] or rig[smart_strip_plug_number] > -1) else SmartDevice
+    device_type = SmartStrip if (smart_strip_plug_name in rig or smart_strip_plug_number in rig) else SmartDevice
     device = device_type(rig[kasa_device_ip])
     await device.update()
 
     # If using strip, grab correct child plug.
-    if rig[smart_strip_plug_name]:
+    if smart_strip_plug_name in rig and rig[smart_strip_plug_name]:
         device = device.get_plug_by_name(rig[smart_strip_plug_name])
-    elif rig[smart_strip_plug_number] > -1:
+    elif smart_strip_plug_number in rig and rig[smart_strip_plug_number] > -1:
         device = device.get_plug_by_index(rig[smart_strip_plug_number])
 
     # Default rig values if unset and run status checks indefinitely. Reread each time bc defaults file may be accessed by query.
