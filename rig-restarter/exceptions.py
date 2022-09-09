@@ -49,6 +49,19 @@ class RRMissingWorkerException(Exception):
     self.message = f"Worker API result does not include worker {worker_name}."
     super().__init__(self.message)
 
+class RRFlexpoolWrongCoinException(Exception):
+  """
+  Exception raised when using Flexpool and no coin is given.
+
+  Attributes:
+    key_attribute -- worker_name
+  """
+
+  def __init__(self):
+    self.message = f"When using Flexpool, the coin field must be supplied."
+    super().__init__(self.message)
+
+
 class RRMaxRestartFailsException(Exception):
   """
   Exception raised when worker has restarted max_restart_fails times in a row and is still not online.

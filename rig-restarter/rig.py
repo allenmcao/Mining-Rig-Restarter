@@ -1,6 +1,25 @@
+from pydantic import BaseModel, ValidationError, validator
+from pools_enum import Pools
 import exceptions
 
-class Rig():
+class Rig(BaseModel):
+    status_api: str
+    wallet: str
+    kasa_device_ip: str
+    worker_name: str
+    endpoint: str
+
+    coin: str = None
+    smart_strip_plug_name: str = None
+    smart_strip_plug_number: int = None
+
+    power_cycle_on_delay: int
+    time_until_offline: int
+    status_check_frequency: int
+    status_check_cooldown: int
+    max_consecutive_restarts: int
+    current_consecutive_restarts: int
+
     def __init__(self, rig_json):
         self.status_api = rig_json['status_api']
         self.coin = rig_json['coin']
@@ -18,17 +37,10 @@ class Rig():
         self.max_consecutive_restarts = rig_json['max_consecutive_restarts']
         self.current_consecutive_restarts = rig_json['current_consecutive_restarts']
     
-    def has_mandatory_fields(self):
-        mandatory_fields = [
-            self.status_api,
-            self.wallet, 
-            self.kasa_device_ip, 
-            self.worker_name, 
-        ]
-
-        for mand in mandatory_fields:
-            if not self.mand:
-                raise exceptions.RRMissingFieldException('Rig', mand)
+    @validator('coin')
+    def flexpool_has_coin(self):
+        if self.coin == 'ETH' and self.status_api == Pools.Flexpool.poolname:
+            raise exceptions.RRFlexpoolWrongCoinException()
 
     def to_json(self):
         return self.__str__()
