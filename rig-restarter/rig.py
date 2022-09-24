@@ -2,6 +2,8 @@ from pydantic import BaseModel, ValidationError, validator
 from pools_enum import Pools
 import exceptions
 
+from kasa import SmartStrip, SmartDevice
+
 class Rig(BaseModel):
     status_api: str
     wallet: str
@@ -18,7 +20,7 @@ class Rig(BaseModel):
     status_check_frequency: int
     status_check_cooldown: int
     max_consecutive_restarts: int
-    current_consecutive_restarts: int
+    current_consecutive_restarts: int = 0
 
     def __init__(self, rig_json):
         self.status_api = rig_json['status_api']
@@ -36,6 +38,10 @@ class Rig(BaseModel):
         self.status_check_cooldown = rig_json['status_check_cooldown']
         self.max_consecutive_restarts = rig_json['max_consecutive_restarts']
         self.current_consecutive_restarts = rig_json['current_consecutive_restarts']
+
+    def get_device(self):
+        device_type = SmartStrip if (self.smart_strip_plug_name or self.smart_strip_plug_number) else SmartDevice
+        return device_type(self.kasa_device_ip)
     
     @validator('coin')
     def flexpool_has_coin(self):

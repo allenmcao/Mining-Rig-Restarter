@@ -8,33 +8,11 @@ from pools_enum import Pools
 from datetime import datetime
 from humanfriendly import format_timespan
 
-# Fields
-status_api = 'status_api'
-coin = 'coin'
-endpoint = 'endpoint'
-wallet = 'wallet'
-kasa_device_ip = "kasa_device_ip"
-worker_name = 'worker_name'
-smart_strip_plug_name = 'smart_strip_plug_name'
-smart_strip_plug_number = 'smart_strip_plug_number'
-mandatory_fields = [
-    status_api,
-    wallet, 
-    kasa_device_ip, 
-    worker_name, 
-]
-power_cycle_on_delay = 'power_cycle_on_delay'
-time_until_offline = 'time_until_offline'
-status_check_frequency = 'status_check_frequency'
-status_check_cooldown = 'status_check_cooldown'
-max_consecutive_restarts = 'max_consecutive_restarts'
-current_consecutive_restarts = 'current_consecutive_restarts'
-
-def is_online_query(status_api, worker_name, wallet, coin):
+def is_online_query(rig):
     """Queries correct API to determine online status. Returns pool stat for worker"""
-    match status_api:
+    match rig.status_api:
         case Pools.FLEXPOOL.poolname:
-            response = requests.get(Pools.FLEXPOOL.endpoint.format(worker_name, wallet, coin))
+            response = requests.get(Pools.FLEXPOOL.endpoint.format(rig.worker_name, rig.wallet, rig.coin))
             json_response = json.loads(response.content.decode())
             result = json_response['result']
 
@@ -42,17 +20,17 @@ def is_online_query(status_api, worker_name, wallet, coin):
             if type(result) is list:
                 for worker in result:
                     if (type(worker is dict) and 'name' in worker):
-                        if (worker['name'] == worker_name):
+                        if (worker['name'] == rig.worker_name):
                             return worker
                     else:
                         raise exceptions.RRMissingFieldException('API Worker Result', 'name')
-                raise exceptions.RRMissingWorkerException(worker_name)
+                raise exceptions.RRMissingWorkerException(rig.worker_name)
             elif type(result) is dict:
-                if ('name' in result and result['name'] == worker_name):
+                if ('name' in result and result['name'] == rig.worker_name):
                     return worker
-                raise exceptions.RRMissingWorkerException(worker_name)
+                raise exceptions.RRMissingWorkerException(rig.worker_name)
             else:
-                raise exceptions.RRMissingWorkerException(worker_name)
+                raise exceptions.RRMissingWorkerException(rig.worker_name)
 
 def is_online_calc(worker, t_offline):
     """Performs calculation to determine whether rig status is offline depending on given parameters.
@@ -73,11 +51,7 @@ def is_online_calc(worker, t_offline):
         log.logger.info(f'{worker["name"]} is ONLINE. {last_seen_message}')
     return passed_online_check
 
-def is_online(status_api, worker_name, wallet, coin, time_until_offline):
+def is_online(rig):
     """Checks whether rig is online depending on pool type. Returns True if online, False if offline."""
-    worker_json = is_online_query(status_api, worker_name, wallet, coin)
-    return is_online_calc(worker_json, time_until_offline)
-
-def filter_query_fields(rig):
-    """Grabs only needed fields from rig."""
-    return [rig[status_api], rig[worker_name], rig[wallet], rig[coin], rig[time_until_offline]]
+    worker_json = is_online_query(rig)
+    return is_online_calc(worker_json, rig.time_until_offline)
