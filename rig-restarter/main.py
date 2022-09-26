@@ -51,7 +51,7 @@ async def rig_restarter(rig):
 
             # Cooldown before next status check after reboot
             await asyncio.sleep(rig.status_check_cooldown * 60)
-        else:
+        elif status is True:
             rig.current_consecutive_restarts = 0
 
             # Ensure status checks follow certain frequency (unless just rebooted)
