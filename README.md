@@ -76,8 +76,9 @@ An full example config is shown below, with mandatory fields on top and optional
     - `max_consecutive_restarts` should depend more on the rig instability, but is left at 3 as a baseline
 
 ## Planned Features
-- Create Rig object with fieldnames
+- Update Rig object
     - Move methods like pool query to take a Rig object
+    - Move and update all defaulting/validators inside Rig object
 - Allow log-file to be specified 
     - Log each day in separate file
 - Handle case where worker is offline (so thus not returned in pool status API results)
