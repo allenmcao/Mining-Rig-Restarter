@@ -43,6 +43,11 @@ class Rig(BaseModel):
         device_type = SmartStrip if (self.smart_strip_plug_name or self.smart_strip_plug_number) else SmartDevice
         return device_type(self.kasa_device_ip)
     
+    @validator('status_api')
+    def status_api_in_enum(self):
+        if self.status_api not in set(p.poolname for p in Pools):
+            raise exceptions.RRWrongStatusApiException(self.status_api)
+
     @validator('coin')
     def flexpool_has_coin(self):
         if self.coin == 'ETH' and self.status_api == Pools.Flexpool.poolname:

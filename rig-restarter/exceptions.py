@@ -49,6 +49,19 @@ class RRMissingWorkerException(Exception):
     self.message = f"Worker API result does not include worker {worker_name}."
     super().__init__(self.message)
 
+class RRWrongStatusApiException(Exception):
+  """
+  Exception raised when using status api is not supported/recognized.
+
+  Attributes:
+    key_attribute -- status_api
+  """
+
+  def __init__(self, status_api):
+    self.status_api = status_api
+    self.message = f"{status_api} worker is not recognized."
+    super().__init__(self.message)
+
 class RRFlexpoolWrongCoinException(Exception):
   """
   Exception raised when using Flexpool and no coin is given.
