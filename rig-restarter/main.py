@@ -7,7 +7,7 @@ from rig_restarter import rig_restarter
 
 # Load defaults file once and store in global variable so any rig restarter can access.
 try:
-    with open(os.path.join(os.path.dirname(__file__), '../defaults.json'), 'r') as defaults_file:
+    with open(os.path.join(os.path.dirname(__file__), './settings/defaults.json'), 'r') as defaults_file:
         defaults = json.load(defaults_file)
         defaults_file.close()
 except:
@@ -18,7 +18,7 @@ async def main():
     rig_restarters = []
 
     try:
-        with open(os.path.join(os.path.dirname(__file__), '../rigs.json'), 'r') as rigs_file:
+        with open(os.path.join(os.path.dirname(__file__), './settings/rigs.json'), 'r') as rigs_file:
             rigs_json = json.load(rigs_file)
             rig_restarters = [rig_restarter(rig, defaults) for rig in rigs_json]
     except:

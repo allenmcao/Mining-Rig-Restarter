@@ -7,7 +7,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join(os.path.dirname(__file__), '../rig_restarter.log')),
+        logging.FileHandler(os.path.join(os.path.dirname(__file__), '../logs/rig_restarter.log')),
         logging.StreamHandler(sys.stdout)
     ]
 )
